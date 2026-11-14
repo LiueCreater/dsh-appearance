@@ -1,0 +1,57 @@
+{
+  "name": "dsh-appearance",
+  "version": "0.2.1",
+  "description": "Liue's Big Silly Fish — wallpaper, glass surfaces, palette theme and a balance widget for DeepSeek Harness.",
+  "type": "module",
+  "main": "./index.js",
+  "icon": "./icon.png",
+  "license": "MIT",
+  "author": "Liue",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "appearance",
+    "wallpaper",
+    "glassmorphism",
+    "theme"
+  ],
+  "exports": {
+    ".": {
+      "default": "./index.js"
+    },
+    "./client": {
+      "default": "./client.js"
+    },
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.png"
+  },
+  "files": [
+    "index.js",
+    "lib",
+    "client.js",
+    "locale",
+    "cordis.patch.yml",
+    "icon.png",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "scripts": {
+    "check": "node --check index.js && node --check client.js && node --check lib/store.js && node --check lib/usage.js && node --check lib/balance.js && node --check lib/http.js && node --check lib/zip.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    }
+  }
+}
