@@ -60,7 +60,7 @@
 ### 从 GitHub
 
 ```bash
-git clone https://github.com/<you>/dsh-appearance.git
+git clone https://github.com/LiueCreater/dsh-appearance.git
 ```
 
 然后同样用 `install_bundle` 指向克隆下来的 `dsh-appearance` 目录。
