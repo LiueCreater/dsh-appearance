@@ -65,14 +65,6 @@ git clone https://github.com/LiueCreater/dsh-appearance.git
 
 然后同样用 `install_bundle` 指向克隆下来的 `dsh-appearance` 目录。
 
-### 从 npm
-
-```bash
-npm install -D dsh-appearance
-```
-
-再把 `install_bundle` 指向 `node_modules/dsh-appearance`（或 DSH 支持的包名安装方式）。
-
 ## 使用
 
 - 入口：**设置 → 啥鱼外观**（`settings.section`，order 5），导航图标为自绘相框山景。
