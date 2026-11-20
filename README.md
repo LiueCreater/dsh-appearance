@@ -6,6 +6,14 @@
 
 ![icon](icon.png)
 
+## 截图
+
+| 壁纸 | 玻璃遮罩 | 圆角卡片 |
+| --- | --- | --- |
+| ![整窗壁纸](assets/screenshots/wallpaper.jpg) | ![玻璃遮罩](assets/screenshots/glassmorphism.jpg) | ![圆角卡片](assets/screenshots/cir.jpg) |
+
+> 截图分别展示：整窗壁纸铺底、卡片玻璃遮罩、以及可调圆角。
+
 ## 功能
 
 ### 壁纸

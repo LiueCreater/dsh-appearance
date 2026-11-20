@@ -36,7 +36,8 @@
     "icon.png",
     "README.md",
     "LICENSE",
-    "package.json"
+    "package.json",
+    "assets"
   ],
   "scripts": {
     "check": "node --check index.js && node --check client.js && node --check lib/store.js && node --check lib/usage.js && node --check lib/balance.js && node --check lib/http.js && node --check lib/zip.js"
