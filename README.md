@@ -63,7 +63,7 @@
 <克隆目录>/dsh-appearance
 ```
 
-安装后在插件列表启用 `dsh-appearance`，刷新页面。
+安装后在插件列表启用 `dsh-lifiwallpaper`，刷新页面。
 
 ### 从 GitHub
 
@@ -71,7 +71,11 @@
 git clone https://github.com/LiueCreater/dsh-appearance.git
 ```
 
-然后同样用 `install_bundle` 指向克隆下来的 `dsh-appearance` 目录。
+然后同样用 `install_bundle` 指向克隆下来的 `dsh-appearance` 目录（包名是 `dsh-lifiwallpaper`）。
+
+## 从 npm
+
+npm 包名：[`dsh-lifiwallpaper`](https://www.npmjs.com/package/dsh-lifiwallpaper)。在插件管理器中安装该包并启用，刷新页面。
 
 ## 使用
 

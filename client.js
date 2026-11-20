@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: 'dsh-appearance',
+  id: 'dsh-lifiwallpaper',
   factory(require) {
     var module = { exports: {} }
 

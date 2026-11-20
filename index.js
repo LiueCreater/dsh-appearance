@@ -5,7 +5,7 @@ import { createUsage } from './lib/usage.js'
 import { createBalance } from './lib/balance.js'
 import { createHub, installRoutes } from './lib/http.js'
 
-export const name = 'dsh-appearance'
+export const name = 'dsh-lifiwallpaper'
 
 const ACTIVE_TURN_LIMIT = 400
 
