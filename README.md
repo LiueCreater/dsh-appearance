@@ -1,6 +1,6 @@
 # Liue 的大傻鱼背景主题
 
-> `dsh-appearance` — 给 [DeepSeek Harness](https://github.com/deepseek-ai) 换一张自己的脸：整窗壁纸、卡片玻璃、图片取色，以及侧栏余额与用量。
+> `dsh-lifiwallpaper` — 给 [DeepSeek Harness](https://github.com/deepseek-ai) 换一张自己的脸：整窗壁纸、卡片玻璃、图片取色，以及侧栏余额与用量。
 
 一个 DSH 外观插件。上传图片或视频作为整个界面的底层背景，拖动裁切、缩放、调模糊；给侧栏按钮、对话内容、输入框和弹窗套上圆角玻璃；从壁纸里自动提取主题色；浅色/深色各自一套样式；设置可导出为带校验的样式包。
 
@@ -60,7 +60,7 @@
 在 DSH 里打开插件管理，使用 `install_bundle`，目标指向本 README 所在目录（包含 `package.json` 的那一层）：
 
 ```text
-<克隆目录>/dsh-appearance
+<克隆目录>/dsh-lifiwallpaper
 ```
 
 安装后在插件列表启用 `dsh-lifiwallpaper`，刷新页面。
@@ -68,10 +68,10 @@
 ### 从 GitHub
 
 ```bash
-git clone https://github.com/LiueCreater/dsh-appearance.git
+git clone https://github.com/LiueCreater/dsh-lifiwallpaper.git
 ```
 
-然后同样用 `install_bundle` 指向克隆下来的 `dsh-appearance` 目录（包名是 `dsh-lifiwallpaper`）。
+然后同样用 `install_bundle` 指向克隆下来的 `dsh-lifiwallpaper` 目录。
 
 ## 从 npm
 
@@ -136,7 +136,7 @@ npm run check          # node --check 所有入口
 
 手动验证：
 
-1. 插件管理器里 disable → enable `dsh-appearance`，刷新页面。
+1. 插件管理器里 disable → enable `dsh-lifiwallpaper`，刷新页面。
 2. 设置 → 啥鱼外观：上传壁纸、调位置/缩放/模糊、切玻璃与主题色、保存。
 3. 检查侧栏底部余额/用量、折叠按钮、过程卡玻璃、全屏右侧栏、菜单层级。
 4. `GET /dsh-appearance/health` 应返回 `{"ok":true}`。
