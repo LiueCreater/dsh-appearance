@@ -639,7 +639,7 @@ window.__ModuleLoader__.load({
         const known = { w: image.width, h: image.height }
         cacheDims(image.version, known.w, known.h)
       }
-      if (appliedInfo.version === image.version && appliedInfo.url && appliedInfo.mode === resolved.mode) return
+      if (appliedInfo.version === image.version && appliedInfo.url && appliedInfo.mode === resolved.mode && appliedInfo.w > 0 && appliedInfo.h > 0) return
       const url = `${API}/background?mode=${resolved.mode}&v=${encodeURIComponent(image.version)}`
       appliedInfo = { mode: resolved.mode, version: image.version, url, w: 0, h: 0 }
       const cached = image.width > 0 && image.height > 0 ? { w: image.width, h: image.height } : readDims(image.version)
@@ -674,6 +674,47 @@ window.__ModuleLoader__.load({
       probe.onload = onReady
       probe.onloadedmetadata = onReady
       probe.src = url
+      // Some cached/embedded responses never fire a probe event. Retry once by
+      // decoding a blob so the wallpaper geometry is never stuck at 0x0.
+      if (typeof window !== 'undefined' && typeof window.setTimeout === 'function') {
+        window.setTimeout(async () => {
+          if (appliedInfo.version !== image.version) return
+          if (appliedInfo.w > 0 && appliedInfo.h > 0) return
+          try {
+            const response = await fetch(url, { credentials: 'same-origin' })
+            if (!response.ok) return
+            const blob = await response.blob()
+            if (isVideo) {
+              const video = document.createElement('video')
+              video.muted = true
+              video.preload = 'metadata'
+              video.src = URL.createObjectURL(blob)
+              video.onloadedmetadata = () => {
+                if (appliedInfo.version !== image.version) return
+                if (video.videoWidth) {
+                  appliedInfo.w = video.videoWidth
+                  appliedInfo.h = video.videoHeight
+                  cacheDims(image.version, appliedInfo.w, appliedInfo.h)
+                  applyBackground()
+                }
+                URL.revokeObjectURL(video.src)
+              }
+              return
+            }
+            if (typeof createImageBitmap === 'function') {
+              const bitmap = await createImageBitmap(blob)
+              if (appliedInfo.version !== image.version) return
+              appliedInfo.w = bitmap.width
+              appliedInfo.h = bitmap.height
+              cacheDims(image.version, bitmap.width, bitmap.height)
+              applyBackground()
+              bitmap.close && bitmap.close()
+            }
+          } catch {
+            /* keep the plain-image fallback */
+          }
+        }, 1200)
+      }
     }
 
     async function refreshAutoPalette(mode, image, url) {
@@ -697,8 +738,14 @@ window.__ModuleLoader__.load({
       }
     }
 
+    function draftBackground(scheme) {
+      const state = store.get()
+      const source = state.dirty ? state.config : state.serverConfig
+      return profileOf(source, scheme).background
+    }
+
     function backgroundGeometry() {
-      const cfg = profileOf(store.get().serverConfig, activeScheme).background
+      const cfg = draftBackground(activeScheme)
       const vw = Math.max(1, window.innerWidth)
       const vh = Math.max(1, window.innerHeight)
       const iw = appliedInfo.w || vw
@@ -844,7 +891,7 @@ window.__ModuleLoader__.load({
         return
       }
       const geo = backgroundGeometry()
-      const bg = profileOf(state.serverConfig, activeScheme).background
+      const bg = draftBackground(activeScheme)
       const blur = Math.round(clamp(bg.blur, 0, 32, 0))
       const linear = blur > 0 && bg.blurType === 'linear'
       const filter = blur <= 0 ? 'none' : linear ? ensureBlurFilter(blur) : `blur(${blur}px)`
@@ -1252,6 +1299,11 @@ window.__ModuleLoader__.load({
       const state = store.get()
       const staged = Boolean(state.stagedImage) || Boolean(state.stagedRemove)
       store.set({ config: merged, dirty: staged || configKey(merged) !== configKey(state.serverConfig) })
+      try {
+        applyBackground()
+      } catch {
+        /* wallpaper preview must never break the form */
+      }
       return merged
     }
 
@@ -1618,7 +1670,7 @@ window.__ModuleLoader__.load({
       .dsap-settings { display:flex; flex-direction:column; gap:14px; padding:2px 0 28px; font-size:13px; color:var(--dsw-alias-label-primary); }
       .dsap-settings-head { display:flex; flex-direction:column; gap:6px; }
       .dsap-intro { margin:0; color:var(--dsw-alias-label-secondary); font-size:12px; line-height:1.6; }
-      .dsap-savebar { position:sticky; top:0; z-index:5; display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:10px 12px; border:1px solid var(--dsw-alias-border-l1); border-radius:12px; background:var(--dsw-alias-bg-layer-1); box-shadow:0 6px 18px rgba(0,0,0,.12); }
+      .dsap-savebar { display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:10px 12px; border:1px solid var(--dsw-alias-border-l1); border-radius:12px; background:var(--dsw-alias-bg-layer-1); box-shadow:0 6px 18px rgba(0,0,0,.12); }
       .dsap-save-state { font-size:12px; font-weight:600; color:var(--dsw-alias-label-secondary); }
       .dsap-savebar[data-dirty='1'] .dsap-save-state { color:var(--dsw-alias-state-warn-primary); }
       .dsap-save-hint { flex:1; min-width:120px; font-size:10px; line-height:1.4; color:var(--dsw-alias-label-secondary); }
@@ -1629,8 +1681,9 @@ window.__ModuleLoader__.load({
       .dsap-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
       .dsap-row + .dsap-row { margin-top:10px; }
       .dsap-label { font-size:11px; color:var(--dsw-alias-label-secondary); min-width:44px; }
-      .dsap-stage { position:relative; height:190px; border-radius:10px; overflow:hidden; border:1px solid var(--dsw-alias-border-l2); background-color:var(--dsw-alias-bg-layer-2); cursor:grab; touch-action:none; background-repeat:no-repeat; }
+      .dsap-stage { position:relative; height:auto; aspect-ratio:var(--dsap-stage-ratio, 16 / 9); min-height:170px; max-height:320px; border-radius:10px; overflow:hidden; border:1px solid var(--dsw-alias-border-l2); background-color:var(--dsw-alias-bg-layer-2); cursor:grab; touch-action:none; background-repeat:no-repeat; }
       .dsap-stage-media { position:absolute; max-width:none; pointer-events:none; user-select:none; }
+      .dsap-stage-frame { position:absolute; inset:0; background-repeat:no-repeat; pointer-events:none; }
       .dsap-stage[data-empty='1'] { display:grid; place-items:center; color:var(--dsw-alias-label-secondary); font-size:12px; background-image:linear-gradient(135deg, var(--dsw-alias-bg-layer-2), var(--dsw-alias-bg-overlay)); }
       .dsap-stage:active { cursor:grabbing; }
       .dsap-stage::after { content:attr(data-hint); position:absolute; right:8px; bottom:6px; font-size:10px; color:#fff; background:rgba(0,0,0,.35); padding:2px 6px; border-radius:6px; opacity:0; transition:opacity .2s; }
@@ -1959,7 +2012,8 @@ window.__ModuleLoader__.load({
       }
 
       /* Settings: pinned tabs and light/dark editor switch. */
-      .dsap-tabs { position:sticky; top:0; z-index:6; display:flex; gap:4px; padding:4px; border-radius:12px; background:var(--dsw-alias-bg-layer-1); border:1px solid var(--dsw-alias-border-l1); }
+      .dsap-sticky { position:sticky; top:0; z-index:6; display:flex; flex-direction:column; gap:8px; padding:6px 0 8px; background:color-mix(in srgb, var(--dsw-alias-bg-layer-1) 90%, transparent); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border-radius:0 0 12px 12px; }
+      .dsap-tabs { display:flex; gap:4px; padding:4px; border-radius:12px; background:var(--dsw-alias-bg-layer-1); border:1px solid var(--dsw-alias-border-l1); }
       .dsap-tabs button { flex:1; min-width:0; appearance:none; border:0; background:transparent; color:var(--dsw-alias-label-secondary); font:inherit; font-size:12px; padding:7px 10px; border-radius:9px; cursor:pointer; }
       .dsap-tabs button[data-active='1'] { background:var(--dsw-alias-bg-base); color:var(--dsw-alias-label-primary); box-shadow:0 1px 4px rgba(0,0,0,.10); }
       .dsap-scheme-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
@@ -2200,26 +2254,39 @@ window.__ModuleLoader__.load({
         return () => el.removeEventListener('wheel', handler)
       }, [])
 
-      const mediaStyle = useMemo(() => {
-        if (!hasImage) return {}
+      const stageGeometry = useMemo(() => {
+        if (!hasImage) return null
         const zoom = profile.background.zoom
         const rect = stageRef.current ? stageRef.current.getBoundingClientRect() : null
         const boxW = rect && rect.width ? rect.width : 480
-        const boxH = rect && rect.height ? rect.height : 190
+        const boxH = rect && rect.height ? rect.height : 270
         const iw = preview.w || boxW
         const ih = preview.h || boxH
         const base = profile.background.fit === 'contain' ? Math.min(boxW / iw, boxH / ih) : Math.max(boxW / iw, boxH / ih)
         const w = Math.max(1, iw * base * zoom)
         const hh = Math.max(1, ih * base * zoom)
-        return {
-          width: `${w}px`,
-          height: `${hh}px`,
-          left: `${-(w - boxW) * profile.background.posX}px`,
-          top: `${-(hh - boxH) * profile.background.posY}px`,
-          opacity: String(profile.background.opacity / 100),
-        }
+        return { boxW, boxH, w, hh, x: -(w - boxW) * profile.background.posX, y: -(hh - boxH) * profile.background.posY }
         // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [snap.images, snap.stagedImage, snap.stagedRemove, snap.config, snap.editScheme, tick])
+
+      const mediaStyle = stageGeometry
+        ? {
+            width: `${stageGeometry.w}px`,
+            height: `${stageGeometry.hh}px`,
+            left: `${stageGeometry.x}px`,
+            top: `${stageGeometry.y}px`,
+            opacity: String(profile.background.opacity / 100),
+          }
+        : {}
+
+      const frameStyle = stageGeometry
+        ? {
+            backgroundImage: `url("${preview.url}")`,
+            backgroundSize: `${stageGeometry.w}px ${stageGeometry.hh}px`,
+            backgroundPosition: `${stageGeometry.x}px ${stageGeometry.y}px`,
+            opacity: String(profile.background.opacity / 100),
+          }
+        : {}
 
       function updateBackground(patch) {
         const current = store.get().config
@@ -2243,21 +2310,19 @@ window.__ModuleLoader__.load({
           .finally(() => setBusy(false))
       }
 
-      function onPointerDown(event) {
-        if (!hasImage) return
-        event.preventDefault()
-        const rect = stageRef.current ? stageRef.current.getBoundingClientRect() : null
-        if (!rect) return
+      function beginDrag(clientX, clientY) {
+        if (!hasImage) return false
+        const stage = stageRef.current
+        const rect = stage ? stage.getBoundingClientRect() : null
+        if (!rect || !rect.width || !rect.height) return false
         const startState = store.get()
         const scheme = startState.editScheme
         const bg0 = profileOf(startState.config, scheme).background
         const drag = {
-          x: event.clientX,
-          y: event.clientY,
+          x: clientX,
+          y: clientY,
           posX: bg0.posX,
           posY: bg0.posY,
-          zoom: bg0.zoom,
-          fit: bg0.fit,
           rect,
           imgW: preview.w || rect.width,
           imgH: preview.h || rect.height,
@@ -2288,12 +2353,28 @@ window.__ModuleLoader__.load({
         const up = () => {
           dragRef.current = null
           window.removeEventListener('pointermove', move)
+          window.removeEventListener('mousemove', move)
           window.removeEventListener('pointerup', up)
+          window.removeEventListener('mouseup', up)
           window.removeEventListener('pointercancel', up)
+          window.removeEventListener('blur', up)
         }
         window.addEventListener('pointermove', move)
+        window.addEventListener('mousemove', move)
         window.addEventListener('pointerup', up)
+        window.addEventListener('mouseup', up)
         window.addEventListener('pointercancel', up)
+        window.addEventListener('blur', up)
+        return true
+      }
+
+      function onPointerDown(event) {
+        if (beginDrag(event.clientX, event.clientY)) event.preventDefault()
+      }
+
+      function onMouseDownFallback(event) {
+        if (dragRef.current) return
+        if (beginDrag(event.clientX, event.clientY)) event.preventDefault()
       }
 
       function onDrop(event) {
@@ -2350,8 +2431,12 @@ window.__ModuleLoader__.load({
             className: 'dsap-stage',
             'data-empty': hasImage ? '0' : '1',
             'data-hint': t('dragHint'),
-            style: hasImage ? { backgroundColor: themeBaseColor() } : undefined,
+            style: Object.assign(
+              { '--dsap-stage-ratio': typeof window !== 'undefined' ? `${window.innerWidth} / ${Math.max(1, window.innerHeight)}` : '16 / 9' },
+              hasImage ? { backgroundColor: themeBaseColor() } : null,
+            ),
             onPointerDown,
+            onMouseDown: onMouseDownFallback,
             onDragOver: (event) => event.preventDefault(),
             onDrop,
             onPaste: (event) => {
@@ -2361,17 +2446,19 @@ window.__ModuleLoader__.load({
             tabIndex: 0,
           },
           hasImage
-            ? h(preview.kind === 'video' ? 'video' : 'img', {
-                key: preview.url,
-                src: preview.url,
-                className: 'dsap-stage-media',
-                style: mediaStyle,
-                draggable: false,
-                muted: preview.kind === 'video',
-                loop: preview.kind === 'video',
-                autoPlay: preview.kind === 'video',
-                playsInline: true,
-              })
+            ? preview.kind === 'video'
+              ? h('video', {
+                  key: preview.url,
+                  src: preview.url,
+                  className: 'dsap-stage-media',
+                  style: mediaStyle,
+                  draggable: false,
+                  muted: true,
+                  loop: true,
+                  autoPlay: true,
+                  playsInline: true,
+                })
+              : h('div', { key: preview.url, className: 'dsap-stage-frame', style: frameStyle })
             : h('div', { className: 'dsap-empty' }, t('noImage'), h('div', { className: 'dsap-hint' }, t('noImageHint'))),
         ),
         h(
@@ -2778,7 +2865,7 @@ window.__ModuleLoader__.load({
         'section',
         { className: 'dsap-card' },
         h('div', { className: 'dsap-card-head' }, h('h3', { className: 'dsap-card-title' }, t('about'))),
-        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.2.2')),
+        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.2.3')),
         h('p', { className: 'dsap-hint' }, t('resetHint')),
         h(
           'div',
@@ -2988,20 +3075,25 @@ window.__ModuleLoader__.load({
         ),
         h(
           'div',
-          { className: 'dsap-tabs' },
-          [
-            ['quick', t('tabQuick')],
-            ['upload', t('tabUpload')],
-          ].map(([value, label]) =>
-            h(
-              'button',
-              { key: value, type: 'button', 'data-active': tab === value ? '1' : '0', onClick: () => setTab(value) },
-              label,
+          { className: 'dsap-sticky' },
+          h(
+            'div',
+            { className: 'dsap-tabs' },
+            [
+              ['quick', t('tabQuick')],
+              ['upload', t('tabUpload')],
+            ].map(([value, label]) =>
+              h(
+                'button',
+                { key: value, type: 'button', 'data-active': tab === value ? '1' : '0', onClick: () => setTab(value) },
+                label,
+              ),
             ),
           ),
+          h(SaveBar),
         ),
         tab === 'quick'
-          ? [h(SchemeSwitch), h(SaveBar), h(BackgroundCard), h(GlassCard), h(ThemeCard), h(UsageCard)]
+          ? [h(SchemeSwitch), h(BackgroundCard), h(GlassCard), h(ThemeCard), h(UsageCard)]
           : [h(SchemeSwitch), h(ImportExportCard), h(BackgroundCard), h(AboutCard)],
       )
     }
