@@ -143,6 +143,11 @@ npm run check          # node --check 所有入口
 
 ## 更新日志
 
+## 0.2.5
+
+- 修正仓库地址为 `https://github.com/LiueCreater/dsh-lifiwallpaper`（npm 0.2.4 的元数据仍指向旧仓库）。
+- npm 上 `0.2.4` 已被占用且不可覆盖，改用 `0.2.5` 重新发布；建议升级。
+
 ## 0.2.4
 
 - 修复壁纸尺寸缺失：Host 端会解析 PNG/JPEG/GIF/WebP 并回填旧壁纸的宽高，UI 状态也会下发宽高。此前未知尺寸导致缩放始终从左上角放大、拖动跨度为 0（看起来完全拖不动）。
