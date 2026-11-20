@@ -43,6 +43,7 @@ window.__ModuleLoader__.load({
       fitCover: '填满',
       fitContain: '适应',
       zoom: '缩放',
+      bgOpacity: '背景不透明度',
       bgBlur: '背景模糊',
       bgBlurGaussian: '高斯模糊',
       bgBlurLinear: '线性模糊',
@@ -139,6 +140,7 @@ window.__ModuleLoader__.load({
       fitCover: 'Fill',
       fitContain: 'Fit',
       zoom: 'Zoom',
+      bgOpacity: 'Wallpaper opacity',
       bgBlur: 'Wallpaper blur',
       bgBlurGaussian: 'Gaussian',
       bgBlurLinear: 'Linear',
@@ -231,7 +233,7 @@ window.__ModuleLoader__.load({
       version: 2,
       profiles: {
         light: {
-          background: { zoom: 1, posX: 0.5, posY: 0.5, fit: 'cover', blur: 0, blurType: 'gaussian' },
+          background: { zoom: 1, posX: 0.5, posY: 0.5, fit: 'cover', blur: 0, blurType: 'gaussian', opacity: 100 },
           glass: {
             mode: 'frosted',
             strength: 55,
@@ -242,7 +244,7 @@ window.__ModuleLoader__.load({
           theme: { mode: 'default', color: '#5b8dff', palette: [] },
         },
         dark: {
-          background: { zoom: 1, posX: 0.5, posY: 0.5, fit: 'cover', blur: 0, blurType: 'gaussian' },
+          background: { zoom: 1, posX: 0.5, posY: 0.5, fit: 'cover', blur: 0, blurType: 'gaussian', opacity: 100 },
           glass: {
             mode: 'frosted',
             strength: 55,
@@ -273,6 +275,7 @@ window.__ModuleLoader__.load({
         fit: bg.fit === 'contain' ? 'contain' : 'cover',
         blur: Math.round(clamp(bg.blur, 0, 32, 0)),
         blurType: bg.blurType === 'linear' ? 'linear' : 'gaussian',
+        opacity: Math.round(clamp(bg.opacity, 0, 100, 100)),
       }
     }
 
@@ -514,6 +517,18 @@ window.__ModuleLoader__.load({
       }
     }
 
+    // Solid theme base behind the wallpaper; visible through the opacity slider.
+    function themeBaseColor() {
+      try {
+        const snapshot = pluginCtx && pluginCtx.theme ? pluginCtx.theme.getTheme() : null
+        const value = snapshot && snapshot.active && snapshot.active.tokens && snapshot.active.tokens['--dsw-alias-bg-base']
+        if (typeof value === 'string' && value && value !== 'transparent') return value
+      } catch {
+        /* fall through */
+      }
+      return themeScheme() === 'dark' ? '#12141a' : '#ffffff'
+    }
+
     // Each theme owns its wallpaper. Never borrow the other theme's image:
     // editing dark while light is active must not change what is on screen.
     function resolveImage() {
@@ -620,10 +635,14 @@ window.__ModuleLoader__.load({
         appliedInfo = { mode: null, version: null, url: null, w: 0, h: 0 }
         return
       }
+      if (image.width > 0 && image.height > 0) {
+        const known = { w: image.width, h: image.height }
+        cacheDims(image.version, known.w, known.h)
+      }
       if (appliedInfo.version === image.version && appliedInfo.url && appliedInfo.mode === resolved.mode) return
       const url = `${API}/background?mode=${resolved.mode}&v=${encodeURIComponent(image.version)}`
       appliedInfo = { mode: resolved.mode, version: image.version, url, w: 0, h: 0 }
-      const cached = readDims(image.version)
+      const cached = image.width > 0 && image.height > 0 ? { w: image.width, h: image.height } : readDims(image.version)
       if (cached) {
         appliedInfo.w = cached.w
         appliedInfo.h = cached.h
@@ -835,6 +854,8 @@ window.__ModuleLoader__.load({
       const y = bg.posY * Math.max(0, geo.vh - geo.h)
       const wrap = ensureWallpaperWrap()
       if (wrap) wrap.style.display = 'block'
+      const mediaOpacity = String(clamp(bg.opacity, 0, 100, 100) / 100)
+      if (wrap) wrap.style.background = themeBaseColor()
       body.style.backgroundImage = 'none'
       body.style.backgroundSize = ''
       body.style.backgroundPosition = ''
@@ -850,6 +871,7 @@ window.__ModuleLoader__.load({
           video.style.top = y + 'px'
           video.style.filter = filter
           video.style.transform = `scale(${grow.toFixed(4)})`
+          video.style.opacity = mediaOpacity
         }
       } else {
         removeVideoLayer()
@@ -861,6 +883,7 @@ window.__ModuleLoader__.load({
           layer.style.backgroundPosition = `${x}px ${y}px`
           layer.style.filter = filter
           layer.style.transform = `scale(${grow.toFixed(4)})`
+          layer.style.opacity = mediaOpacity
         }
       }
       root.setAttribute('data-dsh-ap-bg', '1')
@@ -1252,7 +1275,11 @@ window.__ModuleLoader__.load({
       const res = await fetch(`${API}/background?mode=${encodeURIComponent(mode)}`, {
         method: 'POST',
         credentials: 'same-origin',
-        headers: { 'content-type': staged.type || 'application/octet-stream' },
+        headers: {
+          'content-type': staged.type || 'application/octet-stream',
+          'x-image-width': String(Math.max(0, Math.round(staged.w || 0))),
+          'x-image-height': String(Math.max(0, Math.round(staged.h || 0))),
+        },
         body: staged.blob,
       })
       if (!res.ok) {
@@ -2128,8 +2155,8 @@ window.__ModuleLoader__.load({
         : savedImage && !snap.stagedRemove
           ? {
               url: `${API}/background?mode=${encodeURIComponent(snap.editScheme)}&v=${encodeURIComponent(savedImage.version)}`,
-              w: appliedInfo.version === savedImage.version ? appliedInfo.w : 0,
-              h: appliedInfo.version === savedImage.version ? appliedInfo.h : 0,
+              w: savedImage.width || (appliedInfo.version === savedImage.version ? appliedInfo.w : 0),
+              h: savedImage.height || (appliedInfo.version === savedImage.version ? appliedInfo.h : 0),
               kind: savedImage.kind || (String(savedImage.mime || '').indexOf('video/') === 0 ? 'video' : 'image'),
             }
           : null
@@ -2189,6 +2216,7 @@ window.__ModuleLoader__.load({
           height: `${hh}px`,
           left: `${-(w - boxW) * profile.background.posX}px`,
           top: `${-(hh - boxH) * profile.background.posY}px`,
+          opacity: String(profile.background.opacity / 100),
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [snap.images, snap.stagedImage, snap.stagedRemove, snap.config, snap.editScheme, tick])
@@ -2217,50 +2245,55 @@ window.__ModuleLoader__.load({
 
       function onPointerDown(event) {
         if (!hasImage) return
+        event.preventDefault()
         const rect = stageRef.current ? stageRef.current.getBoundingClientRect() : null
         if (!rect) return
-        dragRef.current = {
+        const startState = store.get()
+        const scheme = startState.editScheme
+        const bg0 = profileOf(startState.config, scheme).background
+        const drag = {
           x: event.clientX,
           y: event.clientY,
-          posX: profile.background.posX,
-          posY: profile.background.posY,
+          posX: bg0.posX,
+          posY: bg0.posY,
+          zoom: bg0.zoom,
+          fit: bg0.fit,
           rect,
           imgW: preview.w || rect.width,
           imgH: preview.h || rect.height,
+          scheme,
         }
-        if (event.currentTarget.setPointerCapture) {
-          try {
-            event.currentTarget.setPointerCapture(event.pointerId)
-          } catch {
-            /* ignore */
-          }
+        dragRef.current = drag
+        const move = (ev) => {
+          if (!dragRef.current) return
+          const st = store.get()
+          const bgNow = profileOf(st.config, scheme).background
+          const base =
+            bgNow.fit === 'contain'
+              ? Math.min(drag.rect.width / drag.imgW, drag.rect.height / drag.imgH)
+              : Math.max(drag.rect.width / drag.imgW, drag.rect.height / drag.imgH)
+          const renderedW = drag.imgW * base * bgNow.zoom
+          const renderedH = drag.imgH * base * bgNow.zoom
+          const spanX = renderedW - drag.rect.width
+          const spanY = renderedH - drag.rect.height
+          const dx = ev.clientX - drag.x
+          const dy = ev.clientY - drag.y
+          const nextX = spanX > 1 ? drag.posX - dx / spanX : bgNow.posX
+          const nextY = spanY > 1 ? drag.posY - dy / spanY : bgNow.posY
+          updateBackground({
+            posX: Number(clamp(nextX, 0, 1, drag.posX).toFixed(4)),
+            posY: Number(clamp(nextY, 0, 1, drag.posY).toFixed(4)),
+          })
         }
-      }
-
-      function onPointerMove(event) {
-        const drag = dragRef.current
-        if (!drag) return
-        const zoom = profile.background.zoom
-        const base =
-          profile.background.fit === 'contain'
-            ? Math.min(drag.rect.width / drag.imgW, drag.rect.height / drag.imgH)
-            : Math.max(drag.rect.width / drag.imgW, drag.rect.height / drag.imgH)
-        const renderedW = drag.imgW * base * zoom
-        const renderedH = drag.imgH * base * zoom
-        const spanX = renderedW - drag.rect.width
-        const spanY = renderedH - drag.rect.height
-        const dx = event.clientX - drag.x
-        const dy = event.clientY - drag.y
-        const nextX = spanX > 1 ? drag.posX - dx / spanX : drag.posX
-        const nextY = spanY > 1 ? drag.posY - dy / spanY : drag.posY
-        updateBackground({
-          posX: Number(clamp(nextX, 0, 1, drag.posX).toFixed(4)),
-          posY: Number(clamp(nextY, 0, 1, drag.posY).toFixed(4)),
-        })
-      }
-
-      function onPointerUp() {
-        dragRef.current = null
+        const up = () => {
+          dragRef.current = null
+          window.removeEventListener('pointermove', move)
+          window.removeEventListener('pointerup', up)
+          window.removeEventListener('pointercancel', up)
+        }
+        window.addEventListener('pointermove', move)
+        window.addEventListener('pointerup', up)
+        window.addEventListener('pointercancel', up)
       }
 
       function onDrop(event) {
@@ -2317,10 +2350,8 @@ window.__ModuleLoader__.load({
             className: 'dsap-stage',
             'data-empty': hasImage ? '0' : '1',
             'data-hint': t('dragHint'),
+            style: hasImage ? { backgroundColor: themeBaseColor() } : undefined,
             onPointerDown,
-            onPointerMove,
-            onPointerUp,
-            onPointerCancel: onPointerUp,
             onDragOver: (event) => event.preventDefault(),
             onDrop,
             onPaste: (event) => {
@@ -2372,6 +2403,22 @@ window.__ModuleLoader__.load({
             onChange: (event) => updateBackground({ zoom: Number(event.target.value) }),
           }),
           h('span', { className: 'dsap-value' }, `${Number(profile.background.zoom).toFixed(2)}×`),
+        ),
+        h(
+          'div',
+          { className: 'dsap-row' },
+          h('span', { className: 'dsap-label' }, t('bgOpacity')),
+          h('input', {
+            type: 'range',
+            className: 'dsap-range',
+            min: 0,
+            max: 100,
+            step: 1,
+            value: profile.background.opacity,
+            disabled: !hasImage,
+            onChange: (event) => updateBackground({ opacity: Number(event.target.value) }),
+          }),
+          h('span', { className: 'dsap-value' }, String(profile.background.opacity) + '%'),
         ),
         h(
           'div',
@@ -2731,7 +2778,7 @@ window.__ModuleLoader__.load({
         'section',
         { className: 'dsap-card' },
         h('div', { className: 'dsap-card-head' }, h('h3', { className: 'dsap-card-title' }, t('about'))),
-        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.2.1')),
+        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.2.2')),
         h('p', { className: 'dsap-hint' }, t('resetHint')),
         h(
           'div',
