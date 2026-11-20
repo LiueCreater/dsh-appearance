@@ -738,14 +738,8 @@ window.__ModuleLoader__.load({
       }
     }
 
-    function draftBackground(scheme) {
-      const state = store.get()
-      const source = state.dirty ? state.config : state.serverConfig
-      return profileOf(source, scheme).background
-    }
-
     function backgroundGeometry() {
-      const cfg = draftBackground(activeScheme)
+      const cfg = profileOf(store.get().serverConfig, activeScheme).background
       const vw = Math.max(1, window.innerWidth)
       const vh = Math.max(1, window.innerHeight)
       const iw = appliedInfo.w || vw
@@ -891,7 +885,7 @@ window.__ModuleLoader__.load({
         return
       }
       const geo = backgroundGeometry()
-      const bg = draftBackground(activeScheme)
+      const bg = profileOf(state.serverConfig, activeScheme).background
       const blur = Math.round(clamp(bg.blur, 0, 32, 0))
       const linear = blur > 0 && bg.blurType === 'linear'
       const filter = blur <= 0 ? 'none' : linear ? ensureBlurFilter(blur) : `blur(${blur}px)`
@@ -1299,11 +1293,6 @@ window.__ModuleLoader__.load({
       const state = store.get()
       const staged = Boolean(state.stagedImage) || Boolean(state.stagedRemove)
       store.set({ config: merged, dirty: staged || configKey(merged) !== configKey(state.serverConfig) })
-      try {
-        applyBackground()
-      } catch {
-        /* wallpaper preview must never break the form */
-      }
       return merged
     }
 
@@ -2865,7 +2854,7 @@ window.__ModuleLoader__.load({
         'section',
         { className: 'dsap-card' },
         h('div', { className: 'dsap-card-head' }, h('h3', { className: 'dsap-card-title' }, t('about'))),
-        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.2.3')),
+        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.2.4')),
         h('p', { className: 'dsap-hint' }, t('resetHint')),
         h(
           'div',

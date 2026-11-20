@@ -55,7 +55,7 @@ export function apply(ctx) {
     const images = store.getImages()
     const brief = (image) =>
       image
-        ? { version: image.version, mime: image.mime, kind: image.kind, bytes: image.bytes, updatedAt: image.updatedAt }
+        ? { version: image.version, mime: image.mime, kind: image.kind, bytes: image.bytes, width: image.width || 0, height: image.height || 0, updatedAt: image.updatedAt }
         : null
     return {
       config: store.getConfig(),
