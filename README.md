@@ -147,7 +147,8 @@ npm run check          # node --check 所有入口
 
 - 修复壁纸尺寸缺失：Host 端会解析 PNG/JPEG/GIF/WebP 并回填旧壁纸的宽高，UI 状态也会下发宽高。此前未知尺寸导致缩放始终从左上角放大、拖动跨度为 0（看起来完全拖不动）。
 - 编辑背景位置/缩放只影响预览与草稿，点击保存后才改变整页壁纸（撤销 0.2.3 的实时应用）。
-- 预览拖动改用与主壁纸一致的 background-position 帧，并同时兼容鼠标与指针事件。
+- 预览拖动改用与主壁纸一致的 `background-position` 帧，并同时兼容鼠标与指针事件。
+- npm 包名改为 `dsh-lifiwallpaper`（`dsh-appearance` 已被他人占用）；插件行名随之变更，本地数据目录仍为 `$DSH_HOME/dsh-appearance/`。
 
 
 ## 0.2.3
