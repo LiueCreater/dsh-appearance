@@ -1011,6 +1011,8 @@ window.__ModuleLoader__.load({
       root.style.setProperty('--dsh-ap-blur', `${Math.round(blur)}px`)
       root.style.setProperty('--dsh-ap-accent', accent)
       root.setAttribute('data-dsh-ap-glass', glass.mode)
+      // Protocol marker consumed by dsh-lifi-adapters; keep in sync with package.json version.
+      root.setAttribute('data-dsh-ap-version', '0.2.7')
       root.setAttribute('data-dsh-ap-region-conversation', glass.regions.conversation ? '1' : '0')
       root.setAttribute('data-dsh-ap-region-sidebar', glass.regions.sidebar ? '1' : '0')
       root.setAttribute('data-dsh-ap-region-panels', glass.regions.panels ? '1' : '0')
