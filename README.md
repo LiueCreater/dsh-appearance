@@ -51,6 +51,20 @@
 - 设置页顶部固定「快速更改 / 上传新样式」两栏。
 - 样式包 ZIP 导出/导入：固定 magic + 整体 SHA-256 + 每张壁纸 SHA-256，全部校验通过才应用。
 
+## 让其他插件复用玻璃
+
+v0.3.0 起，任何插件只要给自己的容器加上 `class="lifi-glass"`，就会获得与 Liue 相同的玻璃表面，并自动跟随用户在 Liue 里的圆角、玻璃模式/强度和浅深主题设置：
+
+```jsx
+<section className="lifi-glass">…</section>
+```
+
+- 运行时由 Liue 注入规则并维护 `--lifi-surface-bg`、`--lifi-surface-border`、`--lifi-blur`、`--lifi-radius`；Liue 被禁用时 class 不生效，属于渐进增强。
+- 需要独立兜底样式（或不希望运行时依赖）时，可打包同包的 `glass.css` / `dsh-lifiwallpaper/glass.css`；两者同时存在时仍以用户设置为准。
+- 关闭玻璃模式（`none`）时，第三方 `.lifi-glass` 表面也会一并隐藏，保持统一。
+
+完整契约（类名、变量、行为、注意事项、版本策略）见 [`docs/glass-api.md`](docs/glass-api.md)。
+
 ## 安装
 
 要求：DSH 0.2.x（含 Web GUI），Node.js 22+。
@@ -143,6 +157,12 @@ npm run check          # node --check 所有入口
 4. `GET /dsh-appearance/health` 应返回 `{"ok":true}`。
 
 ## 更新日志
+
+## 0.3.0
+
+- 新增公开玻璃表面 API：`class="lifi-glass"` 供其他插件复用，统一跟随 Liue 的圆角、模糊/强度、浅深主题与关闭状态。
+- 新增 `--lifi-surface-bg`、`--lifi-surface-border`、`--lifi-blur`、`--lifi-radius` 四个公开变量，以及 `window.dshLifiGlass` 特性探测。
+- 新增 `glass.css` 独立兜底样式与 `docs/glass-api.md` 开发指南；全部仍随 `dsh-lifiwallpaper` 同一包发布。
 
 ## 0.2.7
 

@@ -1007,8 +1007,15 @@ window.__ModuleLoader__.load({
       const blur =
         glass.mode === 'frosted' ? 8 + 18 * strength : glass.mode === 'liquid' ? 14 + 26 * strength : 0
       const accent = accentColor(profileOf(state.serverConfig, activeScheme).theme, activeScheme)
-      root.style.setProperty('--dsh-ap-alpha', String(Math.max(0.18, Math.min(0.92, alpha)).toFixed(3)))
+      const alphaValue = String(Math.max(0.18, Math.min(0.92, alpha)).toFixed(3))
+      root.style.setProperty('--dsh-ap-alpha', alphaValue)
       root.style.setProperty('--dsh-ap-blur', `${Math.round(blur)}px`)
+      // Public variables consumed by .lifi-glass in third-party plugins.
+      root.style.setProperty('--lifi-surface-bg', `rgba(${activeScheme === 'dark' ? '18,20,26' : '255,255,255'},${alphaValue})`)
+      root.style.setProperty('--lifi-surface-border', activeScheme === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.30)')
+      root.style.setProperty('--lifi-blur', `${Math.round(blur)}px`)
+      root.style.setProperty('--lifi-radius', `${Math.round(glass.radius)}px`)
+      root.setAttribute('data-lifi-glass', glass.mode)
       root.style.setProperty('--dsh-ap-accent', accent)
       root.setAttribute('data-dsh-ap-glass', glass.mode)
       root.setAttribute('data-dsh-ap-region-conversation', glass.regions.conversation ? '1' : '0')
@@ -2021,6 +2028,27 @@ window.__ModuleLoader__.load({
         --dsh-composer-text-max-height: 168px !important;
       }
       html[data-dsh-ap-composer-collapsed='1'] [data-composer-seat] [class*='scroll'] { max-height: 168px !important; }
+
+      /* Public API: any plugin can opt a surface into Liue's glass by adding
+         class="lifi-glass". It reads the --lifi-* variables set above, so the
+         radius, tint and blur follow the user's Liue settings automatically. */
+      .lifi-glass {
+        background-color: var(--lifi-surface-bg, rgba(255,255,255,0.55)) !important;
+        -webkit-backdrop-filter: blur(var(--lifi-blur, 0px)) saturate(1.18) !important;
+        backdrop-filter: blur(var(--lifi-blur, 0px)) saturate(1.18) !important;
+        border: 1px solid var(--lifi-surface-border, rgba(255,255,255,0.30));
+        border-radius: var(--lifi-radius, 14px) !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        color: var(--dsw-alias-label-primary, inherit);
+      }
+      .lifi-glass:hover { filter: brightness(1.02); }
+      html[data-dsh-ap-glass='none'] .lifi-glass {
+        background-color: transparent !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+        border-color: transparent;
+        box-shadow: none;
+      }
     `
 
     function installStyles() {
@@ -2857,7 +2885,7 @@ window.__ModuleLoader__.load({
         'section',
         { className: 'dsap-card' },
         h('div', { className: 'dsap-card-head' }, h('h3', { className: 'dsap-card-title' }, t('about'))),
-        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.2.7')),
+        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.3.0')),
         h('p', { className: 'dsap-hint' }, t('resetHint')),
         h(
           'div',
@@ -3366,6 +3394,15 @@ window.__ModuleLoader__.load({
       }
 
       ctx.effect(() => installStyles(), 'dsh-appearance: styles')
+      try {
+        window.dshLifiGlass = Object.freeze({
+          version: '0.3.0',
+          surfaceClass: 'lifi-glass',
+          variables: ['--lifi-surface-bg', '--lifi-surface-border', '--lifi-blur', '--lifi-radius'],
+        })
+      } catch {
+        /* non-browser environments */
+      }
       ctx.effect(() => startSync(), 'dsh-appearance: sync')
       ctx.effect(() => {
         queueVisuals()
