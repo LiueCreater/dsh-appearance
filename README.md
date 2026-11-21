@@ -8,8 +8,8 @@
 
 ## 截图
 
-| 壁纸 | 玻璃遮罩 | 圆角卡片 |
-| --- | --- | --- |
+| 壁纸                                        | 玻璃遮罩                                          | 圆角卡片                                |
+| ----------------------------------------- | --------------------------------------------- | ----------------------------------- |
 | ![整窗壁纸](assets/screenshots/wallpaper.jpg) | ![玻璃遮罩](assets/screenshots/glassmorphism.jpg) | ![圆角卡片](assets/screenshots/cir.jpg) |
 
 > 截图分别展示：整窗壁纸铺底、卡片玻璃遮罩、以及可调圆角。
@@ -21,19 +21,18 @@
 - 图片（PNG / JPEG / GIF / WebP / AVIF）与视频（MP4 / WebM / OGG），单文件 ≤ 80 MB。
 - 上传、拖放、粘贴都可以；大于 3840px 的图片会先在浏览器里压缩。
 - 预览里直接拖动定位，滚轮或滑块缩放（1–4×），可选「填满 / 适应」。
-- 整体模糊 0–32px，支持**高斯**（CSS blur）与**线性**（SVG 横向模糊），只模糊壁纸层。
-- 视频静音循环，Host 端支持 HTTP Range，不会一次性把大文件读进内存。
+- 整体模糊 0–32px，支持**高斯**（CSS blur）与**线性**（SVG 横向模糊）。
+- 视频静音循环，Host 端支持 HTTP Range。
 
 ### 玻璃
 
 - 四种卡片质感：**无 / 半透明 / 磨砂 / 液态**；强度 0–100、圆角 0–28px。
 - 玻璃只加在“卡片”上：侧栏的新对话、插件、工作区按钮，对话区的回答、思考/工具调用过程、输入框、用量条，插件面板与弹窗菜单。其余区域和顶部栏保持透明，直接露出壁纸。
 - 分区开关：侧栏按钮、对话内容、插件面板、弹窗与菜单；AI 回答的玻璃底可单独开关。
-- 输入框上方的对话文字用 mask 渐隐，不铺纯色遮罩；回答的圆角边框不会被渐隐裁掉。
 
 ### 主题色
 
-- 上传壁纸后自动量化取色，最多 5 个主色。
+- 上传壁纸后自动量化取色。
 - 取色器、HEX、RGB 手动指定；只覆盖 `--dsw-alias-brand-primary`，由插件生成对应的浅色/深色两版。
 - 浅色与深色主题各自保存主题色与调色板，切换主题时使用对应一套，互不覆盖。
 
@@ -53,7 +52,7 @@
 
 ## 第三方玻璃适配（独立插件）
 
-Liue 主包不再内置对外的玻璃类名/变量契约。需要让其他插件复用玻璃、或想把「记忆 / 技能 / 待办 / 上下文」等第三方页面接进来的用户，请另外安装独立插件 [`dsh-lifi-adapters`](https://github.com/LiueCreater/dsh-lifi-adapters)。
+Lifiwallpaper 主包不再内置对外的玻璃类名/变量契约。需要让其他插件复用玻璃、或想把「记忆 / 技能 / 待办 / 上下文」等第三方页面接进来的用户，请另外安装独立插件 [`dsh-lifi-adapters`](https://github.com/LiueCreater/dsh-lifi-adapters)。
 
 - 适配包 `0.1.0` 只兼容 Liue `0.2.7`；检测不到对应版本时不会注入任何样式。
 - Liue `0.2.7` 只暴露 `data-dsh-ap-version` 标记；`.lifi-glass`、`--lifi-*`、`window.dshLifiGlass` 均由适配包提供。
@@ -86,7 +85,7 @@ npm 包名：[`dsh-lifiwallpaper`](https://www.npmjs.com/package/dsh-lifiwallpap
 
 ## 使用
 
-- 入口：**设置 → 啥鱼外观**（`settings.section`，order 5），导航图标为自绘相框山景。
+- 入口：**设置 → 啥鱼外观**（`settings.section`，order 5）。
 - 侧栏底部：设置按钮上方（`sidebar.footer.action`）。
 - 设置页里的改动先进入草稿并在预览中显示；点顶部「保存」才写入配置、应用到整个界面。「放弃更改」回到已保存状态。
 - 「快速更改」用于日常调壁纸/玻璃/主题色；「上传新样式」用于导入/导出样式包与重置。
@@ -96,12 +95,12 @@ npm 包名：[`dsh-lifiwallpaper`](https://www.npmjs.com/package/dsh-lifiwallpap
 
 存储目录：`$DSH_HOME/dsh-appearance/`（默认 `~/.dsh/dsh-appearance/`）
 
-| 文件 | 内容 |
-| --- | --- |
-| `config.json` | v2 配置：`profiles.light/dark`、`ui.showUsage` |
-| `background-light.bin/.json` | 浅色壁纸与元数据 |
-| `background-dark.bin/.json` | 深色壁纸与元数据 |
-| `usage.json` | 按日、按会话的 token 账本（保留 30 天） |
+| 文件                           | 内容                                         |
+| ---------------------------- | ------------------------------------------ |
+| `config.json`                | v2 配置：`profiles.light/dark`、`ui.showUsage` |
+| `background-light.bin/.json` | 浅色壁纸与元数据                                   |
+| `background-dark.bin/.json`  | 深色壁纸与元数据                                   |
+| `usage.json`                 | 按日、按会话的 token 账本（保留 30 天）                  |
 
 - 所有数据只保存在本机；壁纸不会上传到任何第三方。
 - 余额请求只发往 `api.deepseek.com`（使用本机 DSH 凭据）或由宿主代为请求账号余额。
@@ -111,16 +110,16 @@ npm 包名：[`dsh-lifiwallpaper`](https://www.npmjs.com/package/dsh-lifiwallpap
 
 插件注册同源路由，前缀 `/dsh-appearance`：
 
-| 方法 | 路径 | 说明 |
-| --- | --- | --- |
-| GET | `/state?force=1` | 配置、两套壁纸元数据、余额、今日用量 |
-| POST | `/config` | 保存配置（JSON） |
+| 方法                  | 路径                             | 说明                      |
+| ------------------- | ------------------------------ | ----------------------- |
+| GET                 | `/state?force=1`               | 配置、两套壁纸元数据、余额、今日用量      |
+| POST                | `/config`                      | 保存配置（JSON）              |
 | GET / POST / DELETE | `/background?mode=light\|dark` | 读取（支持 Range）/ 上传 / 删除壁纸 |
-| GET | `/export.zip` | 导出样式包 |
-| POST | `/import.zip` | 导入样式包（≤ 200 MB，校验通过才应用） |
-| GET | `/events` | SSE `state` 事件（25s 心跳） |
-| POST | `/refresh` | 强制刷新余额 |
-| GET | `/health` | 健康检查 |
+| GET                 | `/export.zip`                  | 导出样式包                   |
+| POST                | `/import.zip`                  | 导入样式包（≤ 200 MB，校验通过才应用） |
+| GET                 | `/events`                      | SSE `state` 事件（25s 心跳）  |
+| POST                | `/refresh`                     | 强制刷新余额                  |
+| GET                 | `/health`                      | 健康检查                    |
 
 安全约束：
 
@@ -173,14 +172,12 @@ npm run check          # node --check 所有入口
 - 预览拖动改用与主壁纸一致的 `background-position` 帧，并同时兼容鼠标与指针事件。
 - npm 包名改为 `dsh-lifiwallpaper`（`dsh-appearance` 已被他人占用）；插件行名随之变更，本地数据目录仍为 `$DSH_HOME/dsh-appearance/`。
 
-
 ## 0.2.3
 
 - 拖动预览时壁纸立即跟随（保存后持久化），修复拖动看似无效的问题。
 - 预览舞台按当前窗口比例显示，不再固定 190px。
 - 「快速更改 / 上传新样式」与保存按钮合并为置顶浮动栏，滚动设置页时始终可见。
 - 对旧壁纸缺少尺寸信息的情况，重新加载时会自动补探测尺寸。
-
 
 ### 0.2.2
 
