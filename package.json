@@ -1,6 +1,6 @@
 {
   "name": "dsh-lifiwallpaper",
-  "version": "0.3.0",
+  "version": "0.2.7",
   "description": "Liue's Big Silly Fish — wallpaper, glass surfaces, palette theme and a balance widget for DeepSeek Harness.",
   "type": "module",
   "main": "./index.js",
@@ -25,8 +25,7 @@
     },
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json",
-    "./icon": "./icon.png",
-    "./glass.css": "./glass.css"
+    "./icon": "./icon.png"
   },
   "files": [
     "index.js",
@@ -38,9 +37,7 @@
     "README.md",
     "LICENSE",
     "package.json",
-    "assets",
-    "glass.css",
-    "docs"
+    "assets"
   ],
   "scripts": {
     "check": "node --check index.js && node --check client.js && node --check lib/store.js && node --check lib/usage.js && node --check lib/balance.js && node --check lib/http.js && node --check lib/zip.js"
