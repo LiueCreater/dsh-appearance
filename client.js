@@ -891,8 +891,11 @@ window.__ModuleLoader__.load({
       const filter = blur <= 0 ? 'none' : linear ? ensureBlurFilter(blur) : `blur(${blur}px)`
       // Slightly overscan blurred layers so the viewport edges do not fade out.
       const grow = blur > 0 ? 1 + Math.min(blur, 32) / 320 : 1
-      const x = bg.posX * Math.max(0, geo.vw - geo.w)
-      const y = bg.posY * Math.max(0, geo.vh - geo.h)
+      // The rendered wallpaper is usually larger than the viewport (cover or
+      // zoom > 1), so the travel span is negative. Clamping it to zero pinned
+      // every wallpaper to the top-left corner and made dragging useless.
+      const x = bg.posX * (geo.vw - geo.w)
+      const y = bg.posY * (geo.vh - geo.h)
       const wrap = ensureWallpaperWrap()
       if (wrap) wrap.style.display = 'block'
       const mediaOpacity = String(clamp(bg.opacity, 0, 100, 100) / 100)
@@ -2854,7 +2857,7 @@ window.__ModuleLoader__.load({
         'section',
         { className: 'dsap-card' },
         h('div', { className: 'dsap-card-head' }, h('h3', { className: 'dsap-card-title' }, t('about'))),
-        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.2.6')),
+        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.2.7')),
         h('p', { className: 'dsap-hint' }, t('resetHint')),
         h(
           'div',
