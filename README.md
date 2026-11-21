@@ -51,6 +51,13 @@
 - 设置页顶部固定「快速更改 / 上传新样式」两栏。
 - 样式包 ZIP 导出/导入：固定 magic + 整体 SHA-256 + 每张壁纸 SHA-256，全部校验通过才应用。
 
+## 第三方玻璃适配（独立插件）
+
+Liue 主包不再内置对外的玻璃类名/变量契约。需要让其他插件复用玻璃、或想把「记忆 / 技能 / 待办 / 上下文」等第三方页面接进来的用户，请另外安装独立插件 [`dsh-lifi-adapters`](https://github.com/LiueCreater/dsh-lifi-adapters)。
+
+- 适配包 `0.1.0` 只兼容 Liue `0.2.7`；检测不到对应版本时不会注入任何样式。
+- Liue `0.2.7` 只暴露 `data-dsh-ap-version` 标记；`.lifi-glass`、`--lifi-*`、`window.dshLifiGlass` 均由适配包提供。
+
 ## 安装
 
 要求：DSH 0.2.x（含 Web GUI），Node.js 22+。
@@ -147,7 +154,7 @@ npm run check          # node --check 所有入口
 ## 0.2.7
 
 - 修复壁纸定位：cover 或放大时背景尺寸大于视口，偏移行程本应为负，之前被 `Math.max(0, …)` 钳成 0，导致拖动无效、壁纸固定在左上角。现在按 `posX/posY × (视口 − 背景)` 计算，拖动与「填满」预览一致。
-- 本版未包含其它行为改动。
+- 暴露 `data-dsh-ap-version="0.2.7"` 标记，供 `dsh-lifi-adapters` 做严格版本绑定；公共玻璃表面契约（`.lifi-glass` / `--lifi-*` / `window.dshLifiGlass`）移到独立适配包，主包不再包含。
 
 ## 0.2.6
 
