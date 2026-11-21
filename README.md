@@ -117,6 +117,7 @@ npm 包名：[`dsh-lifiwallpaper`](https://www.npmjs.com/package/dsh-lifiwallpap
 
 安全约束：
 
+- 每个请求都调用 DSH 宿主的 `ctx.connection.requestRejection(req)`：未登录的浏览器请求返回 401，不可信 Host 返回 403；宿主未提供该服务时回退到同源校验。
 - Host 必须是 loopback（`127.0.0.1` / `localhost` / `[::1]`），或在 `DSH_APPEARANCE_TRUSTED_HOSTS` 中显式列出。
 - 拒绝跨站 `Sec-Fetch-Site`；带 `Origin` 时必须与 `Host` 完全一致。
 - 请求体有大小上限；ZIP 解析拒绝路径穿越、加密条目、ZIP64 与重复条目。
@@ -142,6 +143,11 @@ npm run check          # node --check 所有入口
 4. `GET /dsh-appearance/health` 应返回 `{"ok":true}`。
 
 ## 更新日志
+
+## 0.2.6
+
+- 所有 Host 路由新增 DSH 宿主访问检查 `ctx.connection.requestRejection(req)`：未登录浏览器与不可信来源返回 401/403（旧宿主回退同源校验）；`/health` 同样受保护。
+- 修复 awesome-dsh-plugin 维护者指出的「HTTP routes have no DSH access check」问题。
 
 ## 0.2.5
 

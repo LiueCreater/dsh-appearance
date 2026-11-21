@@ -2854,7 +2854,7 @@ window.__ModuleLoader__.load({
         'section',
         { className: 'dsap-card' },
         h('div', { className: 'dsap-card-head' }, h('h3', { className: 'dsap-card-title' }, t('about'))),
-        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.2.5')),
+        h('div', { className: 'dsap-row' }, h('span', { className: 'dsap-label' }, t('version')), h('span', null, '0.2.6')),
         h('p', { className: 'dsap-hint' }, t('resetHint')),
         h(
           'div',
